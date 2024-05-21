@@ -1,4 +1,5 @@
 // import display from "./display";
+import { timeStamp } from "console";
 import { get } from "https";
 import { Interface } from "readline";
 import display from "./display";
@@ -175,6 +176,97 @@ class WorldModel {
 
   get snakeInstance(): Snake {
     return this.snake;
+  }
+}
+
+interface IInuptHandler {
+  madeleftMove(): boolean;
+  madeRightMove(): boolean;
+  resetLeftMove(): void;
+  resetRightMove(): void;
+}
+
+class LRKeyInputHandler implements IInuptHandler {
+  private wasLeftArrowPushed: boolean = false;
+  private wasRightArrowPushed: boolean = false;
+
+  constructor() {
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowLeft") {
+        this.wasLeftArrowPushed = true;
+      } else if (event.key === "ArrowRight") {
+        this.wasRightArrowPushed = true;
+      }
+    });
+  }
+
+  madeleftMove(): boolean {
+    return this.wasLeftArrowPushed;
+  }
+
+  madeRightMove(): boolean {
+    return this.wasRightArrowPushed;
+  }
+
+  resetLeftMove(): void {
+    this.wasLeftArrowPushed = false;
+  }
+
+  resetRightMove(): void {
+    this.wasRightArrowPushed = false;
+  }
+}
+
+class HumanPlayer extends Player {
+  private snakeController: SnakeController;
+  private inputHandler: IInuptHandler;
+
+  constructor(snakeController: SnakeController, inputHandler: IInuptHandler) {
+    super(snakeController);
+    this.snakeController = snakeController;
+    this.inputHandler = inputHandler;
+  }
+
+  makeTurn(): void {
+    if (this.inputHandler.madeleftMove()) {
+      this.snakeController.LSnaketurn();
+      this.inputHandler.resetLeftMove();
+    } else if (this.inputHandler.madeRightMove()) {
+      this.snakeController.RSnaketurn();
+      this.inputHandler.resetRightMove();
+    }
+  }
+}
+
+class GameController {
+  private world: WorldModel;
+  private player1: Player | null = null;
+  private player2: Player | null = null;
+
+  constructor(world: WorldModel) {
+    this.world = world;
+  }
+
+  setPlayer1(player: Player): void {
+    this.player1 = player;
+  }
+
+  setPlayer2(player: Player): void {
+    this.player2 = player;
+  }
+
+  run(): void {
+    let lastTime = 0;
+
+    const updateFrame = (timeStamp: number) => {
+      const elapsedMillieseconds = timeStamp - lastTime;
+      if (elapsedMillieseconds > 250) {
+        this.world.update(1);
+        lastTime += 250;
+      }
+      requestAnimationFrame(updateFrame);
+    };
+    requestAnimationFrame(updateFrame);
   }
 }
 
