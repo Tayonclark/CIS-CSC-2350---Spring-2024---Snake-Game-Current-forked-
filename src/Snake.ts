@@ -1,5 +1,7 @@
 // import display from "./display";
 import { get } from "https";
+import { Interface } from "readline";
+import display from "./display";
 
 class SnakeController {
   private snakeWorld: WorldModel;
@@ -61,6 +63,30 @@ class AvoidWallsPlayer extends Player {
     ) {
       this.sc.LSnaketurn();
     }
+  }
+}
+
+interface IWorldView {
+  display(WorldModel: WorldModel): void;
+}
+
+class CanvasWorldView implements IWorldView {
+  private scalingFactor: number;
+  private worldCanvas: HTMLCanvasElement;
+  private context: CanvasRenderingContext2D;
+
+  constructor(scalingFactor: number) {
+    this.scalingFactor = scalingFactor;
+    this.worldCanvas = document.createElement("canvas");
+    this.context = this.worldCanvas.getContext("2d")!;
+    document.body.appendChild(this.worldCanvas);
+  }
+
+  display(WorldModel: WorldModel): void {
+    this.worldCanvas.width = WorldModel.width * this.scalingFactor;
+    this.worldCanvas.height = WorldModel.height * this.scalingFactor;
+    this.context.fillStyle = "orange";
+    this.context.fillRect(0, 0, this.scalingFactor, this.scalingFactor);
   }
 }
 
@@ -128,15 +154,23 @@ class WorldModel {
   private snake: Snake;
   width: number;
   height: number;
+  worldView: IWorldView | null = null;
 
   constructor(snake: Snake, width: number, height: number) {
     this.snake = snake;
-    this.width = 1;
-    this.height = 1;
+    this.width = width;
+    this.height = height;
   }
 
   update(steps: number): void {
     this.snake.move(steps);
+    if (this.worldView) {
+      this.worldView.display(this);
+    }
+  }
+
+  setView(view: IWorldView): void {
+    this.worldView = view;
   }
 
   get snakeInstance(): Snake {
